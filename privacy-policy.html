@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy – Dev Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#20253a; --border:#2a2d3e;
+  --accent:#7c6af7; --green:#4caf82; --yellow:#ffc857; --red:#f25f5c;
+  --blue:#4fc3f7; --text:#e2e4f0; --muted:#7b7e9a;
+  --mono:'IBM Plex Mono',monospace; --sans:'Inter',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.7}
+.page{max-width:680px;margin:0 auto;padding:48px 24px 80px}
+
+/* Hero */
+.hero{display:flex;align-items:flex-start;gap:16px;padding:24px;background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:0 0 8px 8px;margin-bottom:32px}
+.hero-icon{font-size:32px;line-height:1;flex-shrink:0;margin-top:2px}
+.hero-text h1{font-family:var(--mono);font-size:18px;font-weight:600;color:#fff;margin-bottom:4px;letter-spacing:-.01em}
+.hero-text p{font-size:13px;color:var(--muted);line-height:1.6}
+.hero-meta{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;padding:3px 8px;border-radius:3px;text-transform:uppercase}
+.chip::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.chip-green{background:rgba(76,175,130,.15);color:var(--green);border:1px solid rgba(76,175,130,.3)}
+.chip-purple{background:rgba(124,106,247,.15);color:var(--accent);border:1px solid rgba(124,106,247,.3)}
+.chip-muted{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* TL;DR */
+.tldr{background:rgba(76,175,130,.07);border:1px solid rgba(76,175,130,.25);border-radius:8px;padding:20px;margin-bottom:32px}
+.tldr-title{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.tldr-title::before{content:'✓'}
+.tldr-grid{display:grid;gap:8px}
+.tldr-row{display:flex;align-items:flex-start;gap:10px;font-size:13px}
+.tldr-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+
+/* Section */
+section{margin-bottom:32px}
+.sec-label{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+h2{font-family:var(--mono);font-size:14px;font-weight:600;color:#fff;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+p{font-size:13px;color:var(--text);margin-bottom:10px}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0 12px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.data-table th{background:var(--surface2);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;background:var(--surface);line-height:1.5}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface2)}
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.pill-green{background:rgba(76,175,130,.15);color:var(--green)}
+.pill-yellow{background:rgba(255,200,87,.12);color:var(--yellow)}
+.pill-muted{background:var(--surface2);color:var(--muted)}
+
+/* Perm list */
+.perm-list{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.perm-list li{display:flex;align-items:flex-start;gap:10px;font-size:12px;background:var(--surface);border:1px solid var(--border);padding:9px 12px;border-radius:5px;line-height:1.5}
+.perm-key{font-family:var(--mono);font-size:10px;font-weight:600;background:rgba(124,106,247,.15);color:var(--accent);border:1px solid rgba(124,106,247,.25);padding:1px 7px;border-radius:3px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+
+/* Alert */
+.alert{display:flex;gap:10px;padding:12px 14px;border-radius:6px;font-size:12px;line-height:1.6;margin-bottom:12px}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.alert-green{background:rgba(76,175,130,.08);border:1px solid rgba(76,175,130,.25)}
+.alert-yellow{background:rgba(255,200,87,.07);border:1px solid rgba(255,200,87,.2)}
+
+/* Compliance */
+.compliance{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:12px;color:var(--muted);line-height:1.8}
+.compliance a{color:var(--accent);text-decoration:none}
+.compliance a:hover{text-decoration:underline}
+.compliance strong{color:var(--text)}
+
+/* Footer */
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.footer-brand{color:var(--accent);font-weight:600}
+
+@media(max-width:520px){.page{padding:32px 16px 60px}.hero{flex-direction:column;gap:12px}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-icon">⚡</div>
+    <div class="hero-text">
+      <h1>Privacy Policy — Dev Toolkit</h1>
+      <p>Chính sách này giải thích tiện ích xử lý dữ liệu của bạn như thế nào, dữ liệu nào được lưu và khi nào dữ liệu rời khỏi thiết bị.</p>
+      <div class="hero-meta">
+        <span class="chip chip-green">Không theo dõi</span>
+        <span class="chip chip-green">Không bán dữ liệu</span>
+        <span class="chip chip-purple">MV3 Compliant</span>
+        <span class="chip chip-muted">25/03/2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tldr">
+    <div class="tldr-title">Tóm tắt nhanh (TL;DR)</div>
+    <div class="tldr-grid">
+      <div class="tldr-row"><span class="tldr-icon">🔒</span><span>Mọi dữ liệu (form, cài đặt Telegram) chỉ lưu <strong>trên thiết bị của bạn</strong> — không có server nào của nhà phát triển nhận được.</span></div>
+      <div class="tldr-row"><span class="tldr-icon">📤</span><span>Dữ liệu chỉ rời thiết bị khi bạn <strong>chủ động bấm "Send TG"</strong> — và chỉ đến Telegram Bot của chính bạn.</span></div>
+      <div class="tldr-row"><span class="tldr-icon">🚫</span><span>Không quảng cáo. Không tracking. Không analytics. Không chia sẻ bên thứ ba.</span></div>
+      <div class="tldr-row"><span class="tldr-icon">🗑️</span><span>Gỡ tiện ích → Chrome xoá sạch toàn bộ dữ liệu đã lưu.</span></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-label">Mục 01</div>
+    <h2>Dữ liệu được xử lý</h2>
+    <table class="data-table">
+      <thead><tr><th>Dữ liệu</th><th>Dùng để</th><th>Lưu ở đâu</th></tr></thead>
+      <tbody>
+        <tr><td>URL, method, headers, body request</td><td>Khôi phục form API Tester sau khi đóng popup</td><td><span class="pill pill-green">Local only</span></td></tr>
+        <tr><td>Telegram Bot Token &amp; Chat ID</td><td>Gửi file/báo cáo khi người dùng bấm nút</td><td><span class="pill pill-green">Local only</span></td></tr>
+        <tr><td>Video quay màn hình</td><td>Xem lại hoặc gửi Telegram theo ý muốn</td><td><span class="pill pill-yellow">Tuỳ chọn → TG</span></td></tr>
+        <tr><td>Console log, JS error, network event</td><td>Hiển thị trong tab Report để debug</td><td><span class="pill pill-green">Bộ nhớ tạm</span></td></tr>
+        <tr><td>URL trang + nội dung bug report</td><td>Export Markdown/JSON hoặc gửi Telegram</td><td><span class="pill pill-yellow">Tuỳ chọn → TG</span></td></tr>
+        <tr><td>Thông tin cá nhân (tên, email…)</td><td>—</td><td><span class="pill pill-muted">Không thu thập</span></td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert-green">
+      <span class="alert-icon">ℹ️</span>
+      <span><strong>"Local only"</strong> = <code style="font-size:11px;color:var(--accent)">chrome.storage.local</code> — lưu trên máy bạn, không đồng bộ cloud, không ai khác đọc được.</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Mục 02</div>
+    <h2>Khi nào dữ liệu rời khỏi thiết bị</h2>
+    <div class="alert alert-yellow">
+      <span class="alert-icon">⚡</span>
+      <span>Khi bạn <strong>chủ động bấm "Send TG"</strong>, tiện ích gửi file/báo cáo đến <strong>Telegram Bot do chính bạn cài đặt</strong> qua <code style="font-size:11px;color:var(--accent)">api.telegram.org</code>. Không có gửi tự động hay background sync nào.</span>
+    </div>
+    <ul class="perm-list">
+      <li><span class="perm-key">Điểm đến</span><span><strong style="color:var(--text)">api.telegram.org</strong> — API chính thức Telegram. Không server trung gian nào của nhà phát triển.</span></li>
+      <li><span class="perm-key">Điều kiện</span><span>Chỉ gửi khi bạn đã nhập Bot Token + Chat ID và bấm nút rõ ràng.</span></li>
+      <li><span class="perm-key">Mã hoá</span><span>Mọi request qua HTTPS (TLS). Không plain-text.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-label">Mục 03</div>
+    <h2>Tại sao cần các quyền hạn này</h2>
+    <ul class="perm-list">
+      <li><span class="perm-key">tabs</span>Lấy URL tab hiện tại điền vào form Bug Reporter.</li>
+      <li><span class="perm-key">activeTab</span>Truy cập trang đang mở để ghi nhận network event và console log.</li>
+      <li><span class="perm-key">scripting</span>Inject script vào trang để hook <code style="font-size:11px;color:var(--accent)">XHR/fetch</code> cho Event Monitor.</li>
+      <li><span class="perm-key">storage</span>Lưu cấu hình vào <code style="font-size:11px;color:var(--accent)">chrome.storage.local</code>. Không dùng <code style="font-size:11px;color:var(--muted)">storage.sync</code>.</li>
+      <li><span class="perm-key">&lt;all_urls&gt;</span>Content script chạy trên mọi trang để monitor event; API Tester gửi request đến URL bất kỳ.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-label">Mục 04</div>
+    <h2>Bạn luôn có toàn quyền kiểm soát</h2>
+    <ul class="perm-list">
+      <li><span class="perm-key">Xoá hết</span>Gỡ cài đặt tiện ích — Chrome tự xoá <code style="font-size:11px;color:var(--accent)">chrome.storage.local</code>.</li>
+      <li><span class="perm-key">Xoá Token</span>Xoá Bot Token / Chat ID trong tab cài đặt bất cứ lúc nào.</li>
+      <li><span class="perm-key">Dừng ghi</span>Event Monitor chỉ hoạt động khi popup mở; event tự xoá khi tab đóng/reload.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-label">Mục 05</div>
+    <h2>Tuân thủ Chrome Web Store</h2>
+    <div class="compliance">
+      Tiện ích tuân thủ đầy đủ <a href="https://developer.chrome.com/docs/webstore/program-policies" target="_blank" rel="noopener">Chrome Web Store Program Policies</a> và <a href="https://developer.chrome.com/docs/webstore/program-policies/user-data-faq" target="_blank" rel="noopener">User Data Policy (Limited Use)</a>.<br><br>
+      <strong>Tuyên bố Limited Use:</strong> Dữ liệu thu thập chỉ dùng đúng cho mục đích kỹ thuật đã mô tả. Không dùng cho quảng cáo cá nhân hoá, không bán cho bên thứ ba, không dùng ngoài phạm vi chức năng tiện ích.
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Mục 06</div>
+    <h2>Câu hỏi &amp; Liên hệ</h2>
+    <p>Có thắc mắc? Liên hệ qua email trong trang Chrome Web Store. Cam kết phản hồi trong <strong>3 ngày làm việc</strong>.</p>
+    <p>Chính sách này áp dụng cho Dev Toolkit v1.2.0 trở đi. Thay đổi sẽ được thông báo qua cập nhật phiên bản.</p>
+  </section>
+
+  <footer class="footer">
+    <span><span class="footer-brand">⚡ Dev Toolkit</span> — Privacy Policy</span>
+    <span>Cập nhật 25/03/2026 · v1.2.0</span>
+  </footer>
+
+</div>
+</body>
+</html>

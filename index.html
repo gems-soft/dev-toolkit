@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Dev Toolkit – API Tester, Screen Recorder, Bug Reporter trực tiếp trong Chrome. Công cụ debug mạnh mẽ cho lập trình viên.">
+<meta property="og:title" content="Dev Toolkit – Chrome Extension">
+<meta property="og:description" content="API Tester · Screen Recorder · Bug Reporter. Bộ công cụ debug cho lập trình viên ngay trong Chrome.">
+<title>Dev Toolkit – Chrome Extension for Developers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset & Variables ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0b0d13;
+  --surface:  #13161f;
+  --surface2: #1c2030;
+  --border:   #252a3d;
+  --border2:  #1e2236;
+  --purple:   #7c6af7;
+  --purple-d: #5548d9;
+  --blue:     #4fc3f7;
+  --green:    #4caf82;
+  --yellow:   #ffc857;
+  --red:      #f25f5c;
+  --text:     #dde1f0;
+  --muted:    #5e6380;
+  --muted2:   #8b8fa8;
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Syne', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ─── Noise overlay ─────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 200px;
+  pointer-events: none;
+  z-index: 999;
+  opacity: .6;
+}
+
+/* ─── Grid bg ───────────────────────────────────────────── */
+.grid-bg {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(124,106,247,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,106,247,.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ─── Nav ───────────────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  height: 52px;
+  border-bottom: 1px solid var(--border2);
+  background: rgba(11,13,19,.85);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 9px;
+  font-weight: 700; font-size: 13px; color: #fff;
+  text-decoration: none; letter-spacing: .02em;
+}
+
+.nav-logo-dot {
+  width: 7px; height: 7px;
+  background: var(--purple);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--purple);
+  animation: breathe 3s infinite;
+}
+
+@keyframes breathe {
+  0%,100% { box-shadow: 0 0 6px var(--purple); }
+  50%      { box-shadow: 0 0 16px var(--purple), 0 0 32px rgba(124,106,247,.3); }
+}
+
+.nav-links {
+  display: flex; align-items: center; gap: 4px;
+}
+
+.nav-link {
+  font-size: 11px; color: var(--muted2);
+  text-decoration: none; padding: 5px 10px;
+  border-radius: 4px; transition: color .15s, background .15s;
+  letter-spacing: .04em;
+}
+.nav-link:hover { color: var(--text); background: var(--surface2); }
+
+.nav-cta {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 700; color: var(--bg);
+  background: var(--purple);
+  padding: 6px 14px; border-radius: 5px;
+  text-decoration: none; letter-spacing: .04em;
+  transition: background .15s, transform .1s;
+}
+.nav-cta:hover { background: var(--purple-d); transform: translateY(-1px); }
+
+/* ─── Hero ──────────────────────────────────────────────── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center;
+  padding: 100px 24px 80px;
+  position: relative;
+}
+
+/* Radial glow behind hero */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 10%; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 600px;
+  background: radial-gradient(ellipse at center,
+    rgba(124,106,247,.1) 0%,
+    rgba(79,195,247,.05) 40%,
+    transparent 70%);
+  pointer-events: none;
+}
+
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 500;
+  color: var(--purple); letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid rgba(124,106,247,.35);
+  background: rgba(124,106,247,.08);
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 28px;
+  animation: fadeUp .6s ease both;
+}
+
+.hero-tag::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--purple);
+  animation: breathe 2s infinite;
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(40px, 8vw, 80px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+  color: #fff;
+  margin-bottom: 8px;
+  animation: fadeUp .6s .1s ease both;
+}
+
+.hero-title span {
+  background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: clamp(12px, 2vw, 14px);
+  color: var(--muted2);
+  max-width: 500px;
+  margin: 16px auto 36px;
+  line-height: 1.8;
+  animation: fadeUp .6s .2s ease both;
+}
+
+.hero-badges {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center;
+  margin-bottom: 40px;
+  animation: fadeUp .6s .25s ease both;
+}
+
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 500; letter-spacing: .06em;
+  padding: 4px 11px; border-radius: 3px;
+}
+.badge-green  { background: rgba(76,175,130,.12); color: var(--green); border: 1px solid rgba(76,175,130,.25); }
+.badge-blue   { background: rgba(79,195,247,.1);  color: var(--blue);  border: 1px solid rgba(79,195,247,.2); }
+.badge-muted  { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border); }
+.badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.hero-actions {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  animation: fadeUp .6s .3s ease both;
+}
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--purple); color: #fff;
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  padding: 12px 24px; border-radius: 6px;
+  text-decoration: none; letter-spacing: .04em;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  box-shadow: 0 0 0 rgba(124,106,247,0);
+}
+.btn-primary:hover {
+  background: var(--purple-d);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(124,106,247,.35);
+}
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; color: var(--muted2);
+  font-family: var(--mono); font-size: 12px;
+  padding: 12px 20px; border-radius: 6px;
+  border: 1px solid var(--border);
+  text-decoration: none; letter-spacing: .04em;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--muted); background: var(--surface2); }
+
+/* ─── Terminal mockup ───────────────────────────────────── */
+.mockup-wrap {
+  margin-top: 64px;
+  animation: fadeUp .8s .4s ease both;
+}
+
+.mockup {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(124,106,247,.1),
+    0 24px 80px rgba(0,0,0,.6),
+    0 0 120px rgba(124,106,247,.06);
+}
+
+.mockup-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.mockup-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.d-red    { background: #ff5f57; }
+.d-yellow { background: #febc2e; }
+.d-green  { background: #28c840; }
+
+.mockup-title {
+  margin-left: auto; margin-right: auto;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: .06em;
+}
+
+.mockup-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.m-tab {
+  padding: 7px 14px;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  cursor: default;
+}
+.m-tab.active {
+  color: var(--purple);
+  border-bottom-color: var(--purple);
+}
+
+.mockup-body {
+  padding: 14px;
+  font-size: 11px; line-height: 1.7;
+}
+
+.m-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+
+.m-select {
+  background: var(--surface2); color: var(--green);
+  border: 1px solid var(--border); border-radius: 3px;
+  padding: 4px 8px; font-family: var(--mono); font-size: 10px;
+  font-weight: 700;
+}
+
+.m-input {
+  flex: 1; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 3px;
+  color: var(--muted2); padding: 4px 8px;
+  font-family: var(--mono); font-size: 10px;
+}
+
+.m-send {
+  background: var(--purple); color: #fff;
+  border: none; border-radius: 3px;
+  padding: 4px 10px; font-family: var(--mono);
+  font-size: 10px; font-weight: 700; cursor: default;
+}
+
+.m-resp {
+  background: var(--bg);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 10px; margin-top: 4px;
+}
+
+.m-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; margin-bottom: 6px;
+}
+
+.m-200 { color: var(--green); font-weight: 700; }
+.m-ms  { color: var(--muted); font-size: 9px; }
+
+.m-json { font-size: 10px; line-height: 1.8; }
+.j-key  { color: #7c6af7; }
+.j-str  { color: #4caf82; }
+.j-num  { color: #ffc857; }
+.j-bool { color: #4fc3f7; }
+
+/* ─── Section wrapper ───────────────────────────────────── */
+.section {
+  padding: 96px 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.section-tag {
+  font-size: 10px; font-weight: 500; color: var(--purple);
+  letter-spacing: .14em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800; color: #fff;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.section-desc {
+  font-size: 13px; color: var(--muted2);
+  max-width: 480px; line-height: 1.8;
+  margin-bottom: 48px;
+}
+
+/* ─── Feature cards ─────────────────────────────────────── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.feat-card {
+  background: var(--surface);
+  padding: 28px;
+  position: relative;
+  transition: background .2s;
+  cursor: default;
+}
+
+.feat-card:hover { background: var(--surface2); }
+
+.feat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background .2s;
+}
+.feat-card:hover::before { background: var(--purple); }
+
+.feat-icon {
+  font-size: 24px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.feat-title {
+  font-family: var(--display);
+  font-size: 16px; font-weight: 700;
+  color: #fff; margin-bottom: 8px;
+  letter-spacing: -.01em;
+}
+
+.feat-desc {
+  font-size: 12px; color: var(--muted2);
+  line-height: 1.75; margin-bottom: 16px;
+}
+
+.feat-tags {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+
+.feat-tag {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px;
+  background: var(--bg); color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+/* ─── How it works ──────────────────────────────────────── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.step {
+  position: relative;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color .2s, transform .2s;
+}
+.step:hover { border-color: rgba(124,106,247,.4); transform: translateY(-3px); }
+
+.step-num {
+  font-family: var(--display);
+  font-size: 36px; font-weight: 800;
+  color: rgba(124,106,247,.15);
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -.03em;
+}
+
+.step-title {
+  font-size: 13px; font-weight: 700; color: #fff;
+  margin-bottom: 6px; letter-spacing: .02em;
+}
+
+.step-desc { font-size: 11px; color: var(--muted2); line-height: 1.7; }
+
+/* ─── Privacy section ───────────────────────────────────── */
+.privacy-strip {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.privacy-inner {
+  max-width: 1000px; margin: 0 auto;
+  padding: 56px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.privacy-text .section-tag { margin-bottom: 8px; }
+.privacy-text .section-title { font-size: clamp(22px, 4vw, 32px); margin-bottom: 12px; }
+.privacy-text p { font-size: 12px; color: var(--muted2); line-height: 1.8; }
+.privacy-text a { color: var(--purple); text-decoration: none; }
+.privacy-text a:hover { text-decoration: underline; }
+
+.privacy-checks {
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.priv-check {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 12px; color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 11px 14px; border-radius: 5px;
+  transition: border-color .15s;
+}
+.priv-check:hover { border-color: rgba(76,175,130,.3); }
+
+.priv-check-icon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(76,175,130,.15);
+  border: 1px solid rgba(76,175,130,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+  color: var(--green);
+}
+
+/* ─── CTA section ───────────────────────────────────────── */
+.cta-section {
+  padding: 100px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 400px;
+  background: radial-gradient(ellipse,
+    rgba(124,106,247,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-section .section-title { margin-bottom: 20px; }
+.cta-section .section-desc { margin: 0 auto 36px; }
+
+.cta-note {
+  font-size: 11px; color: var(--muted);
+  margin-top: 16px; letter-spacing: .02em;
+}
+
+/* ─── Footer ────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 32px;
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 16px;
+}
+
+.footer-brand {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 12px; color: var(--muted2);
+  text-decoration: none;
+}
+.footer-brand strong { color: var(--purple); }
+
+.footer-links {
+  display: flex; gap: 20px; flex-wrap: wrap;
+}
+
+.footer-link {
+  font-size: 11px; color: var(--muted);
+  text-decoration: none; letter-spacing: .03em;
+  transition: color .15s;
+}
+.footer-link:hover { color: var(--text); }
+
+.footer-copy {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: .04em;
+}
+
+/* ─── Animations ────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* scroll-reveal */
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* Typing cursor */
+.cursor {
+  display: inline-block;
+  width: 2px; height: 1em;
+  background: var(--purple);
+  margin-left: 2px;
+  animation: blink .9s step-end infinite;
+  vertical-align: middle;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 720px) {
+  nav { padding: 0 16px; }
+  .nav-links { display: none; }
+  .privacy-inner { grid-template-columns: 1fr; }
+  .hero-title { font-size: 36px; }
+}
+
+@media (max-width: 480px) {
+  .section { padding: 64px 16px; }
+  footer { flex-direction: column; align-items: flex-start; gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- ─── Nav ─────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="#">
+    <span class="nav-logo-dot"></span>
+    ⚡ Dev Toolkit
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="#features">Tính năng</a>
+    <a class="nav-link" href="#how">Cách dùng</a>
+    <a class="nav-link" href="#privacy">Bảo mật</a>
+    <a class="nav-link" href="privacy-policy.html">Privacy Policy</a>
+  </div>
+  <a class="nav-cta" href="https://chrome.google.com/webstore" target="_blank" rel="noopener">
+    ↓ Cài ngay
+  </a>
+</nav>
+
+<!-- ─── Hero ─────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-tag">Chrome Extension · Manifest V3 · v1.2.0</div>
+
+  <h1 class="hero-title">
+    Bộ công cụ debug<br>
+    <span id="typing-text">API Tester</span><span class="cursor"></span><br>
+    ngay trong Chrome.
+  </h1>
+
+  <p class="hero-sub">
+    Kiểm thử API, quay màn hình, báo cáo bug — tất cả trong một popup nhỏ gọn.
+    Không cần mở tab mới, không cần rời khỏi trang đang debug.
+  </p>
+
+  <div class="hero-badges">
+    <span class="badge badge-green">Miễn phí</span>
+    <span class="badge badge-blue">Manifest V3</span>
+    <span class="badge badge-green">Không tracking</span>
+    <span class="badge badge-muted">Chrome 88+</span>
+  </div>
+
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://chrome.google.com/webstore" target="_blank" rel="noopener">
+      ⚡ Thêm vào Chrome
+    </a>
+    <a class="btn-ghost" href="#features">Xem tính năng →</a>
+  </div>
+
+  <!-- mockup -->
+  <div class="mockup-wrap reveal">
+    <div class="mockup">
+      <div class="mockup-bar">
+        <div class="mockup-dot d-red"></div>
+        <div class="mockup-dot d-yellow"></div>
+        <div class="mockup-dot d-green"></div>
+        <span class="mockup-title">⚡ Dev Toolkit — v1.2.0</span>
+      </div>
+      <div class="mockup-tabs">
+        <div class="m-tab active">API TESTER</div>
+        <div class="m-tab">RECORDER</div>
+        <div class="m-tab">BUG REPORT</div>
+        <div class="m-tab">REPORT</div>
+      </div>
+      <div class="mockup-body">
+        <div class="m-row">
+          <div class="m-select">GET</div>
+          <div class="m-input">https://api.example.com/users/me</div>
+          <div class="m-send">▶ Send</div>
+        </div>
+        <div class="m-resp">
+          <div class="m-status">
+            <span class="m-200">● 200 OK</span>
+            <span class="m-ms">· 142ms</span>
+          </div>
+          <div class="m-json">
+<span class="j-key">"id"</span>: <span class="j-num">42</span>,<br>
+<span class="j-key">"name"</span>: <span class="j-str">"Quoc Anh"</span>,<br>
+<span class="j-key">"role"</span>: <span class="j-str">"developer"</span>,<br>
+<span class="j-key">"active"</span>: <span class="j-bool">true</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Features ─────────────────────────────────────────── -->
+<div id="features" class="section">
+  <div class="section-tag reveal">Tính năng</div>
+  <h2 class="section-title reveal">Ba công cụ,<br>một tiện ích.</h2>
+  <p class="section-desc reveal">
+    Được thiết kế để không làm gián đoạn workflow —
+    mọi thứ đều accessible trong một popup nhỏ.
+  </p>
+
+  <div class="features-grid reveal">
+    <div class="feat-card">
+      <span class="feat-icon">🔌</span>
+      <div class="feat-title">API Tester</div>
+      <div class="feat-desc">
+        Gửi HTTP request trực tiếp từ popup. Hỗ trợ GET, POST, PUT, PATCH, DELETE.
+        Syntax highlight response JSON, copy nhanh, lưu trạng thái tự động.
+      </div>
+      <div class="feat-tags">
+        <span class="feat-tag">REST</span>
+        <span class="feat-tag">JSON</span>
+        <span class="feat-tag">Headers</span>
+        <span class="feat-tag">Auth</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <span class="feat-icon">🎥</span>
+      <div class="feat-title">Screen Recorder</div>
+      <div class="feat-desc">
+        Quay màn hình kèm âm thanh, export .webm. Chạy trong tab riêng để không mất khi popup đóng.
+        Gửi thẳng qua Telegram Bot của bạn.
+      </div>
+      <div class="feat-tags">
+        <span class="feat-tag">WebM</span>
+        <span class="feat-tag">Audio</span>
+        <span class="feat-tag">Telegram</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <span class="feat-icon">🐛</span>
+      <div class="feat-title">Bug Reporter</div>
+      <div class="feat-desc">
+        Tạo bug report nhanh với URL trang, mức độ severity, steps to reproduce.
+        Export Markdown hoặc JSON, hoặc gửi Telegram chỉ với một click.
+      </div>
+      <div class="feat-tags">
+        <span class="feat-tag">Markdown</span>
+        <span class="feat-tag">JSON</span>
+        <span class="feat-tag">Severity</span>
+      </div>
+    </div>
+
+    <div class="feat-card">
+      <span class="feat-icon">📊</span>
+      <div class="feat-title">Event Monitor</div>
+      <div class="feat-desc">
+        Ghi nhận realtime console log, JS error, network request trên trang đang mở.
+        Filter theo loại, xem summary lỗi, export report tổng hợp.
+      </div>
+      <div class="feat-tags">
+        <span class="feat-tag">Console</span>
+        <span class="feat-tag">JS Error</span>
+        <span class="feat-tag">Network</span>
+        <span class="feat-tag">Export</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── How it works ─────────────────────────────────────── -->
+<div id="how" class="section" style="padding-top:0">
+  <div class="section-tag reveal">Cách dùng</div>
+  <h2 class="section-title reveal">Cài xong, dùng ngay.</h2>
+  <p class="section-desc reveal">Không cần đăng ký, không cần API key, không cần server.</p>
+
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">01</div>
+      <div class="step-title">Cài từ Chrome Web Store</div>
+      <div class="step-desc">Bấm "Thêm vào Chrome", xác nhận quyền hạn. Biểu tượng ⚡ xuất hiện trên toolbar.</div>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">02</div>
+      <div class="step-title">Mở popup</div>
+      <div class="step-desc">Click vào biểu tượng ⚡ trên bất kỳ trang nào. Chọn tab tương ứng với việc cần làm.</div>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">03</div>
+      <div class="step-title">(Tuỳ chọn) Cấu hình Telegram</div>
+      <div class="step-desc">Nhập Bot Token và Chat ID nếu muốn gửi recording hoặc bug report qua Telegram.</div>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">04</div>
+      <div class="step-title">Debug nhanh hơn</div>
+      <div class="step-desc">API Tester, recorder, bug report — tất cả trong tầm tay, không cần rời khỏi trang.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Privacy strip ─────────────────────────────────────── -->
+<div id="privacy" class="privacy-strip">
+  <div class="privacy-inner">
+    <div class="privacy-text reveal">
+      <div class="section-tag">Bảo mật & Quyền riêng tư</div>
+      <h2 class="section-title">Dữ liệu của bạn,<br>ở lại trên máy bạn.</h2>
+      <p>
+        Mọi cấu hình và dữ liệu đều lưu trong
+        <code style="color:var(--purple);font-size:11px">chrome.storage.local</code>
+        — không server nào của chúng tôi nhận được.
+        Tiện ích tuân thủ đầy đủ Chrome Web Store User Data Policy (Limited Use).
+      </p>
+      <p style="margin-top:12px">
+        <a href="privacy-policy.html">Đọc Privacy Policy đầy đủ →</a>
+      </p>
+    </div>
+    <div class="privacy-checks reveal">
+      <div class="priv-check"><span class="priv-check-icon">✓</span>Không thu thập thông tin cá nhân</div>
+      <div class="priv-check"><span class="priv-check-icon">✓</span>Không có server trung gian</div>
+      <div class="priv-check"><span class="priv-check-icon">✓</span>Dữ liệu chỉ gửi khi bạn bấm nút</div>
+      <div class="priv-check"><span class="priv-check-icon">✓</span>Không quảng cáo, không tracking</div>
+      <div class="priv-check"><span class="priv-check-icon">✓</span>Gỡ cài đặt → xoá sạch mọi dữ liệu</div>
+      <div class="priv-check"><span class="priv-check-icon">✓</span>Manifest V3 — quyền hạn tối thiểu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CTA ───────────────────────────────────────────────── -->
+<div class="cta-section">
+  <div class="section-tag reveal" style="margin-bottom:12px">Miễn phí · Không cần đăng ký</div>
+  <h2 class="section-title reveal">Sẵn sàng debug<br>nhanh hơn?</h2>
+  <p class="section-desc reveal">
+    Cài vào Chrome trong 30 giây.<br>Không cần tài khoản. Không cần thẻ ngân hàng.
+  </p>
+  <div class="reveal">
+    <a class="btn-primary" href="https://chrome.google.com/webstore" target="_blank" rel="noopener" style="font-size:13px;padding:14px 32px;">
+      ⚡ Thêm vào Chrome — Miễn phí
+    </a>
+    <p class="cta-note">Chrome 88+ · Manifest V3 · ~70KB</p>
+  </div>
+</div>
+
+<!-- ─── Footer ────────────────────────────────────────────── -->
+<footer>
+  <a class="footer-brand" href="#">
+    <strong>⚡ Dev Toolkit</strong>
+    <span style="color:var(--muted)">v1.2.0</span>
+  </a>
+  <div class="footer-links">
+    <a class="footer-link" href="#features">Tính năng</a>
+    <a class="footer-link" href="privacy-policy.html">Privacy Policy</a>
+    <a class="footer-link" href="https://chrome.google.com/webstore" target="_blank" rel="noopener">Chrome Web Store</a>
+  </div>
+  <span class="footer-copy">© 2026 · Made with ⚡ for developers</span>
+</footer>
+
+<script>
+// ── Typing effect ────────────────────────────────────────
+const words = ['API Tester', 'Screen Recorder', 'Bug Reporter', 'Event Monitor'];
+let wi = 0, ci = 0, deleting = false;
+const el = document.getElementById('typing-text');
+
+function type() {
+  const word = words[wi];
+  if (!deleting) {
+    el.textContent = word.slice(0, ++ci);
+    if (ci === word.length) { deleting = true; setTimeout(type, 1800); return; }
+  } else {
+    el.textContent = word.slice(0, --ci);
+    if (ci === 0) { deleting = false; wi = (wi + 1) % words.length; }
+  }
+  setTimeout(type, deleting ? 40 : 80);
+}
+setTimeout(type, 1200);
+
+// ── Scroll reveal ────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

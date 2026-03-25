@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Dev Toolkit</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+<div class="header">
+  <span class="logo">⚡ Dev Toolkit</span>
+  <span class="version">v1.1.0</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="api">API TESTER</button>
+  <button class="tab" data-tab="recorder">RECORDER</button>
+  <button class="tab" data-tab="bug">BUG REPORT</button>
+  <button class="tab" data-tab="report">REPORT</button>
+</div>
+
+<!-- ─── API Tester ──────────────────────────────────────── -->
+<div id="api" class="panel active">
+  <div class="url-row">
+    <select id="method">
+      <option>GET</option>
+      <option>POST</option>
+      <option>PUT</option>
+      <option>PATCH</option>
+      <option>DELETE</option>
+      <option>HEAD</option>
+      <option>OPTIONS</option>
+    </select>
+    <input id="url" type="text" placeholder="https://api.example.com/endpoint" spellcheck="false">
+  </div>
+
+  <details class="mt6">
+    <summary style="color:var(--muted);cursor:pointer;font-size:11px;padding:4px 0;">Headers (JSON)</summary>
+    <textarea id="headers" class="mt6" rows="3" spellcheck="false"
+      placeholder='{"Authorization": "Bearer token", "Accept": "application/json"}'></textarea>
+  </details>
+
+  <details class="mt6" id="body-section">
+    <summary style="color:var(--muted);cursor:pointer;font-size:11px;padding:4px 0;">Body (JSON / text)</summary>
+    <textarea id="body" class="mt6" rows="4" spellcheck="false"
+      placeholder='{"key": "value"}'></textarea>
+  </details>
+
+  <div class="btn-row mt8">
+    <button class="btn-primary" id="send-btn">▶ Send</button>
+    <button class="btn-ghost" id="clear-btn">✕ Clear</button>
+    <button class="btn-ghost" id="history-btn" title="History">⏱</button>
+  </div>
+
+  <div id="api-response" style="margin-top:10px;display:none;">
+    <div class="response-meta">
+      <span class="status-badge" id="resp-status"></span>
+      <span id="resp-status-text" style="color:var(--muted);font-size:10px;"></span>
+      <span class="elapsed" id="resp-elapsed"></span>
+      <button class="copy-resp" id="copy-resp-btn">copy</button>
+    </div>
+    <div class="response-tabs">
+      <button class="resp-tab active" data-resp="body">Body</button>
+      <button class="resp-tab" data-resp="headers">Headers</button>
+    </div>
+    <div class="response-body" id="resp-body-content"></div>
+  </div>
+
+  <div id="api-error" class="msg error" style="display:none;"></div>
+  <div id="api-loading" class="msg info" style="display:none;">Đang gửi request...</div>
+</div>
+
+<!-- ─── Screen Recorder ─────────────────────────────────── -->
+<div id="recorder" class="panel">
+  <div class="recorder-center">
+    <div class="rec-icon">🎥</div>
+    <div class="rec-desc">
+      Screen recorder chạy trong tab riêng để không bị đóng khi mất focus.<br>
+      Hỗ trợ ghi màn hình + âm thanh, export .webm.
+    </div>
+    <button class="btn-primary" id="open-recorder-btn" style="padding:9px 28px;">
+      Mở Screen Recorder
+    </button>
+  </div>
+</div>
+
+<!-- ─── Bug Reporter ────────────────────────────────────── -->
+<div id="bug" class="panel">
+  <label class="field-label">URL TRANG HIỆN TẠI</label>
+  <input id="bug-url" type="text" readonly placeholder="Đang lấy URL..." spellcheck="false">
+
+  <label class="field-label">TIÊU ĐỀ LỖI</label>
+  <input id="bug-title" type="text" placeholder="VD: Button submit không hoạt động trên mobile">
+
+  <label class="field-label">MỨC ĐỘ</label>
+  <div class="severity-row">
+    <button class="sev-btn" data-sev="low">LOW</button>
+    <button class="sev-btn active-medium" data-sev="medium">MEDIUM</button>
+    <button class="sev-btn" data-sev="high">HIGH</button>
+    <button class="sev-btn" data-sev="critical">CRITICAL</button>
+  </div>
+
+  <label class="field-label">MÔ TẢ / STEPS TO REPRODUCE</label>
+  <textarea id="bug-desc" rows="5"
+    placeholder="1. Vào trang...&#10;2. Click...&#10;3. Kết quả thực tế: ...&#10;4. Kết quả mong đợi: ..."></textarea>
+
+  <div class="btn-row mt8">
+    <button class="btn-ghost" id="copy-md-btn">📋 Copy Markdown</button>
+    <button class="btn-ghost" id="copy-json-btn">📋 Copy JSON</button>
+  </div>
+
+  <div id="bug-status" style="margin-top:8px;"></div>
+</div>
+
+
+<!-- ─── Report Panel ────────────────────────────────────────────────── -->
+<div id="report" class="panel">
+
+  <div class="report-toolbar">
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="CONSOLE">Console</button>
+      <button class="filter-btn" data-filter="JS_ERROR">JS Error</button>
+      <button class="filter-btn" data-filter="NETWORK">Network</button>
+    </div>
+    <div class="report-actions">
+      <button class="btn-icon" id="refresh-btn" title="Refresh">↻</button>
+      <button class="btn-icon danger" id="clear-events-btn" title="Xoá tất cả">✕</button>
+    </div>
+  </div>
+
+  <div class="event-summary" id="event-summary">
+    <span class="sum-item err" id="sum-errors">0 errors</span>
+    <span class="sum-sep">·</span>
+    <span class="sum-item warn" id="sum-warns">0 warns</span>
+    <span class="sum-sep">·</span>
+    <span class="sum-item net" id="sum-net">0 requests</span>
+    <span class="sum-sep">·</span>
+    <span class="sum-item fail-net" id="sum-net-fail">0 failed</span>
+  </div>
+
+  <div class="event-list" id="event-list">
+    <div class="empty-state">Chưa có dữ liệu.<br>Tương tác với trang để bắt đầu ghi nhận.</div>
+  </div>
+
+  <div class="btn-row mt8">
+    <button class="btn-primary" id="gen-report-btn">📋 Export Report</button>
+    <button class="btn-ghost" id="send-report-tg-btn">✈ Send TG</button>
+  </div>
+
+  <div id="report-status" class="msg" style="margin-top:8px;display:none;"></div>
+</div>
+
+<footer class="ext-footer">
+  <span class="ext-footer-left">
+    <span class="ext-footer-dot"></span>
+    Dev Toolkit <span class="ext-footer-ver">v1.2.0</span>
+  </span>
+  <a class="ext-footer-policy" id="privacy-link" href="#">Privacy Policy</a>
+</footer>
+
+<script src="popup.js"></script>
+</body>
+</html>

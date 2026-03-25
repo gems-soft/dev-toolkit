@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Screen Recorder — Dev Toolkit</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
+      --accent: #7c6af7; --tg: #29a8e0; --error: #f25f5c;
+      --success: #4caf82; --warn: #ffc857;
+      --text: #e2e4f0; --muted: #6b7094;
+      --font: 'Consolas', 'Menlo', monospace;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font); font-size: 13px;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 32px 16px 48px; gap: 16px;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px 32px; width: 480px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .card-title { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; width: 100%; }
+    .card-title span { color: var(--accent); }
+    .status-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
+    .dot.recording { background: var(--error); animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .status-text { font-size: 11px; color: var(--muted); }
+    .timer { font-size: 42px; font-weight: 700; letter-spacing: 3px; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+    .timer.recording { color: var(--error); }
+    .options { display: flex; gap: 20px; width: 100%; }
+    label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); cursor: pointer; }
+    input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+    .btn { width: 100%; padding: 10px 0; border: none; border-radius: 8px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-start { background: var(--accent); color: #fff; }
+    .btn-stop  { background: var(--error); color: #fff; }
+    .btn-sm { border: none; border-radius: 5px; font-family: var(--font); font-size: 10px; font-weight: 700; cursor: pointer; padding: 5px 10px; transition: opacity 0.15s; letter-spacing: 0.3px; }
+    .btn-sm:hover { opacity: 0.8; }
+    .btn-dl  { background: var(--accent); color: #fff; }
+    .btn-tg  { background: var(--tg); color: #fff; }
+    .btn-del { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    video { width: 100%; border-radius: 8px; border: 1px solid var(--border); background: #000; display: none; max-height: 200px; }
+    .clips { width: 100%; display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+    .clip-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .clip-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; }
+    .clip-thumb { width: 56px; height: 36px; border-radius: 4px; background: #111; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); cursor: pointer; }
+    .clip-info { flex: 1; min-width: 0; }
+    .clip-name { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .clip-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .clip-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .tg-status { padding: 0 12px 8px; font-size: 10px; display: none; }
+    .tg-status.sending { color: var(--tg); display: block; }
+    .tg-status.done    { color: var(--success); display: block; }
+    .tg-status.fail    { color: var(--error); display: block; }
+    .tg-config { width: 480px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .tg-config-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(41,168,224,.07); border-bottom: 1px solid transparent; cursor: pointer; user-select: none; }
+    .tg-config-header.open { border-bottom-color: var(--border); }
+    .tg-config-title { font-size: 11px; font-weight: 700; color: var(--tg); }
+    .tg-config-toggle { font-size: 10px; color: var(--muted); }
+    .tg-config-body { padding: 14px; display: none; flex-direction: column; gap: 10px; background: var(--surface); }
+    .tg-config-body.open { display: flex; }
+    .field-label { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 3px; display: block; }
+    input[type=text], input[type=password] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: var(--font); font-size: 11px; padding: 7px 9px; outline: none; transition: border-color 0.15s; }
+    input[type=text]:focus, input[type=password]:focus { border-color: var(--tg); }
+    input::placeholder { color: var(--muted); }
+    .tg-save-row { display: flex; gap: 8px; align-items: center; }
+    .tg-save-btn { border: none; border-radius: 5px; background: var(--tg); color: #fff; font-family: var(--font); font-size: 11px; font-weight: 700; padding: 7px 18px; cursor: pointer; }
+    .tg-save-btn:hover { opacity: 0.85; }
+    .tg-hint { font-size: 10px; color: var(--muted); line-height: 1.7; }
+    .tg-hint a { color: var(--tg); text-decoration: none; }
+    .tg-hint a:hover { text-decoration: underline; }
+    .msg { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 11px; display: none; }
+    .msg.error   { background: rgba(242,95,92,.1);  color: var(--error);   border: 1px solid rgba(242,95,92,.3); }
+    .msg.success { background: rgba(76,175,130,.1); color: var(--success); border: 1px solid rgba(76,175,130,.3); }
+    .msg.info    { background: rgba(79,195,247,.08); color: var(--tg);     border: 1px solid rgba(79,195,247,.2); }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-title"><span>⚡</span> Screen Recorder</div>
+  <div class="status-row">
+    <span class="dot" id="rec-dot"></span>
+    <span class="status-text" id="rec-status">Sẵn sàng</span>
+  </div>
+  <div class="timer" id="timer">00:00:00</div>
+  <div class="options">
+    <label><input type="checkbox" id="opt-audio" checked> Mic / System audio</label>
+    <label><input type="checkbox" id="opt-tab"> Chỉ tab hiện tại</label>
+  </div>
+  <button class="btn btn-start" id="start-btn">▶ Bắt đầu ghi</button>
+  <button class="btn btn-stop"  id="stop-btn" disabled>⏹ Dừng & lưu clip</button>
+  <video id="preview" controls></video>
+  <div class="msg" id="err-msg"></div>
+</div>
+
+<div class="card" id="clips-card" style="display:none;">
+  <div class="card-title" style="font-size:12px;margin-bottom:2px;">CLIPS ĐÃ GHI</div>
+  <div class="clips" id="clip-list"></div>
+</div>
+
+<div class="tg-config">
+  <div class="tg-config-header" id="tg-toggle">
+    <span class="tg-config-title">✈ Cấu hình Telegram</span>
+    <span class="tg-config-toggle" id="tg-toggle-icon">▼ mở</span>
+  </div>
+  <div class="tg-config-body" id="tg-body">
+    <div>
+      <label class="field-label">BOT TOKEN</label>
+      <input type="password" id="tg-token" placeholder="1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+    </div>
+    <div>
+      <label class="field-label">CHAT ID</label>
+      <input type="text" id="tg-chatid" placeholder="-1001234567890  hoặc  123456789">
+    </div>
+    <div class="tg-save-row">
+      <button class="tg-save-btn" id="tg-save-btn">Lưu cấu hình</button>
+      <span id="tg-save-status" style="font-size:10px;color:var(--success);display:none;">✓ Đã lưu</span>
+    </div>
+    <div class="tg-hint">
+      Tạo bot: nhắn <strong>/newbot</strong> cho <a href="https://t.me/BotFather" target="_blank">@BotFather</a> → copy token.<br>
+      Lấy chat ID: forward tin nhắn cho <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a>.<br>
+      Clip sẽ được gửi dạng <strong>document</strong> (.webm) để giữ chất lượng gốc.
+    </div>
+  </div>
+</div>
+
+<script src="recorder.js"></script>
+</body>
+</html>
